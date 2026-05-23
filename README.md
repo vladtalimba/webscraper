@@ -1,2 +1,2 @@
 # webcrawler
-A simple web crawler made with Node.js
+A simple web scraper made with Node.js
