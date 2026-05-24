@@ -1,0 +1,56 @@
+{
+  "id": "46d12d9e-0f8f-4cbd-a2e2-c5afa15e6e21",
+  "prevId": "a72a6d7c-40a3-4533-8398-3eb6bf3b001d",
+  "version": "7",
+  "dialect": "postgresql",
+  "tables": {
+    "public.consumables": {
+      "name": "consumables",
+      "schema": "",
+      "columns": {
+        "productName": {
+          "name": "productName",
+          "type": "varchar",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "description": {
+          "name": "description",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "imageUrl": {
+          "name": "imageUrl",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "price": {
+          "name": "price",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    }
+  },
+  "enums": {},
+  "schemas": {},
+  "sequences": {},
+  "roles": {},
+  "policies": {},
+  "views": {},
+  "_meta": {
+    "columns": {},
+    "schemas": {},
+    "tables": {}
+  }
+}

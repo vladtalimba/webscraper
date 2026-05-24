@@ -1,16 +1,16 @@
 import express from "express";
 import { Request, Response } from "express";
 import cron from "node-cron";
-import { url } from "node:inspector";
-import { title } from "node:process";
-import puppeteer, { Browser, executablePath, Page } from "puppeteer";
+import puppeteer, { Browser, Page } from "puppeteer";
+import { addConsumable, getConsumables } from "./db/queries/products.js";
+import { NewProduct } from "./schemas/schema.js";
 
 const app = express();
 const PORT = 8080;
 
 const browser: Browser = await puppeteer.launch();
 
-async function getConsumables(){
+async function scrapeConsumables(){
 
 // Initialise puppeteer
 const page: Page = await browser.newPage();
@@ -25,18 +25,14 @@ await page.type('[name=password]', 'password');
 
 await page.click('[type=submit]');
 
-// Making sure we are past the login page
-await page.screenshot({path: "1.png"});
 // Wait for page to load, and go to the consumables category
-
-await page.goto("https://www.web-scraping.dev/products?category=consumables");
+let pageNumber = 1;
+await page.goto(`https://www.web-scraping.dev/products?category=consumables&page=${pageNumber}`);
 
 await page.waitForSelector('img', {
     visible: true
 });
 
-// Making sure we have found the consumables.
-await page.screenshot({path: '2.png'});
 
 const data: Object[] = await page.evaluate(() => {
 
@@ -59,28 +55,38 @@ const data: Object[] = await page.evaluate(() => {
     const prices: NodeListOf<Element> = document.querySelectorAll(".price");
     const priceTexts: string[] = Array.from(prices).map(v => v.textContent);
 
-    const data: Object[] = [];
+    const data: NewProduct[] = [];
     const numOfProducts = urls.length;
 
     for(let i = 0 ; i < numOfProducts; i++){
         data.push({
             productName: titleTexts[i],
             description: descriptionTexts[i],
-            image: urls[i],
+            imageUrl: urls[i],
             price: priceTexts[i]
-        });
+        } as NewProduct);
     }
 
     return data;
 });
 
-console.log(data);
+// Add found products to db.
+await Promise.all(data.map(async product => {
+   await addConsumable(product as NewProduct);
+}));
+
+console.log("Products successfully added!");
 }
 
 // Endpoints
-app.get("/api/consumables", (req: Request, res: Response) => {
+app.get("/api/consumables", async (req: Request, res: Response) => {
     
-    res.send("Blablabla");
+    try {
+        const consumables = await getConsumables();
+        res.status(200).send(consumables);
+    }catch(err){
+        console.log(err);
+    }
 })
 
 app.listen(PORT, () => {
@@ -88,4 +94,4 @@ app.listen(PORT, () => {
 })
 
 // Cron job
-cron.schedule('* * * * *', await getConsumables);
+cron.schedule('* * * * *', await scrapeConsumables);
