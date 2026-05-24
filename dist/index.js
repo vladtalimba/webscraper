@@ -1,10 +1,11 @@
 import express from "express";
 import cron from "node-cron";
 import puppeteer from "puppeteer";
+import { addConsumable, getConsumables } from "./db/queries/products.js";
 const app = express();
 const PORT = 8080;
 const browser = await puppeteer.launch();
-async function getConsumables() {
+async function scrapeConsumables() {
     // Initialise puppeteer
     const page = await browser.newPage();
     // Navigate to web-scraping.dev
@@ -41,20 +42,30 @@ async function getConsumables() {
             data.push({
                 productName: titleTexts[i],
                 description: descriptionTexts[i],
-                image: urls[i],
+                imageUrl: urls[i],
                 price: priceTexts[i]
             });
         }
         return data;
     });
-    console.log(data);
+    // Add found products to db.
+    await Promise.all(data.map(async (product) => {
+        await addConsumable(product);
+    }));
+    console.log("Products successfully added!");
 }
 // Endpoints
-app.get("/api/consumables", (req, res) => {
-    res.send("Blablabla");
+app.get("/api/consumables", async (req, res) => {
+    try {
+        const consumables = await getConsumables();
+        res.status(200).send(consumables);
+    }
+    catch (err) {
+        console.log(err);
+    }
 });
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
 });
 // Cron job
-cron.schedule('* * * * *', await getConsumables);
+cron.schedule('* * * * *', await scrapeConsumables);
